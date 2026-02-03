@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valentine</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #fdebed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: Georgia, serif;
+}
+
+/* ================= STAGE ================= */
+
+.stage {
+  width: 360px;
+  height: 540px;
+  position: relative;
+}
+
+/* ================= ENVELOPE ================= */
+
+.envelope {
+  position: absolute;
+  bottom: 60px;
+  width: 100%;
+  height: 220px;
+  background: #f9b7c7;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* flap */
+.flap {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 120px;
+  background: #f48fa8;
+  clip-path: polygon(0 0, 50% 70%, 100% 0);
+  transform-origin: top;
+  transition: transform 0.6s ease;
+  z-index: 5;
+}
+
+/* ================= PAPER ================= */
+
+.paper {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(130px);
+  width: 90%;
+  height: 220px;
+  background: white;
+  border-radius: 16px;
+  transition: transform 0.8s ease;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* ================= STATES ================= */
+
+.stage.step-2 .flap {
+  transform: rotateX(180deg);
+}
+
+.stage.step-2 .paper {
+  transform: translateX(-50%) translateY(70px);
+}
+
+.stage.step-3 .paper {
+  transform: translateX(-50%) translateY(-190px);
+}
+
+/* ================= CONTENT ================= */
+
+.content {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  height: 100%;
+  padding: 14px;
+  position: relative;
+}
+
+.stage.step-3 .content {
+  opacity: 1;
+}
+
+.title {
+  text-align: center;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.photo {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* bottom-left text */
+.text-box {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  width: 135px;
+  background: #fdebed;
+  padding: 10px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+/* bottom-right */
+.next-area {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  text-align: center;
+}
+
+.dog {
+  width: 70px;
+  display: block;
+  margin: 0 auto 6px;
+}
+
+.next-btn {
+  background: #ff8fab;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+/* ================= TAP TEXT ================= */
+
+.tap {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  color: #b45a6a;
+}
+</style>
+</head>
+
+<body>
+
+<div class="stage" id="stage">
+
+  <div class="envelope" id="envelope">
+    <div class="flap"></div>
+
+    <div class="paper">
+      <div class="content">
+
+        <div class="title">FOREVER TOGETHER</div>
+
+        <img class="photo"
+          src="https://i.ibb.co/HTG1hn4n/IMG-20260203-100041.jpg">
+
+        <div class="text-box">
+          I am really thankful to have you in my life.
+        </div>
+
+        <div class="next-area">
+          <img class="dog"
+            src="https://i.ibb.co/8gyxPbrF/6587-removebg-preview.png">
+          <div class="next-btn">NEXT →</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tap" id="tap">Tap to open</div>
+
+</div>
+
+<script>
+let step = 1;
+const stage = document.getElementById("stage");
+const tap = document.getElementById("tap");
+const envelope = document.getElementById("envelope");
+
+envelope.addEventListener("click", () => {
+  if (step === 1) {
+    stage.classList.add("step-2");
+    tap.innerText = "One more tap";
+    step = 2;
+  } 
+  else if (step === 2) {
+    stage.classList.add("step-3");
+    tap.innerText = "";
+    step = 3;
+  }
+});
+</script>
+
+</body>
+</html>
