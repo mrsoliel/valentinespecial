@@ -1,106 +1,478 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Valentine</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>3-Tap Envelope Microinteraction</title>
 <style>
-html, body {
-  margin: 0;
-  height: 100%;
-  overflow: hidden;
-  background: #fdebed;
-}
-svg {
-  width: 100vw;
-  height: 100vh;
-  display: block;
-}
-.tap {
-  position: fixed;
-  bottom: 24px;
-  width: 100%;
-  text-align: center;
-  font-family: Georgia, serif;
-  color: #b45a6a;
-  font-size: 16px;
-}
+  :root{
+    --bg: #f2f5f8;
+    --envelope: #ff9fb6;
+    --paper: #fff;
+    --shadow: rgba(20,30,40,0.12);
+    --accent: #2b6ef6;
+    --ease-bounce: cubic-bezier(.2,1.2,.3,1);
+    --ease-fast-out: cubic-bezier(.22,1,.36,1);
+    --tap-duration: 80ms;
+    --flap-duration: 320ms;
+    --peek-duration: 320ms;
+    --slide-duration: 280ms;
+    --unfold-duration: 260ms;
+  }
+
+  /* Basic layout */
+  html,body{
+    height:100%;
+    margin:0;
+    background:var(--bg);
+    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  .stage{
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:24px;
+    padding:24px;
+    box-sizing:border-box;
+  }
+
+  /* Envelope wrapper (click target) */
+  .envelope-wrap{
+    width:320px;
+    max-width:64vw;
+    perspective:900px; /* needed for flap rotateX */
+    cursor:pointer;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Envelope body */
+  .envelope{
+    position:relative;
+    width:100%;
+    padding-top:66%; /* aspect ratio */
+    transform-origin:center;
+  }
+
+  .envelope-body{
+    position:absolute;
+    left:0; right:0; top:18%;
+    bottom:0;
+    margin:0 auto;
+    background: linear-gradient(180deg, var(--envelope) 0 100%);
+    border-radius:12px;
+    box-shadow: 0 10px 22px var(--shadow), 0 2px 6px rgba(0,0,0,0.06);
+    overflow:visible;
+  }
+
+  /* flap - separate element sitting above the paper */
+  .envelope-flap{
+    position:absolute;
+    left:8%;
+    right:8%;
+    top:0;
+    height:44%;
+    transform-origin: 50% 0%;
+    background: linear-gradient(180deg, #ffd3df 0%, var(--envelope) 100%);
+    border-top-left-radius:14px;
+    border-top-right-radius:14px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    z-index:6;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    backface-visibility: hidden;
+    transform: rotateX(0deg);
+  }
+
+  .flap-inner{
+    width:100%;
+    height:100%;
+    clip-path: polygon(0 0, 50% 70%, 100% 0, 100% 100%, 0 100%);
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.0));
+    border-top-left-radius:12px;
+    border-top-right-radius:12px;
+  }
+
+  /* Paper (hidden under flap initially) */
+  .paper{
+    --paper-offset: 12%;
+    position:absolute;
+    left:10%;
+    right:10%;
+    top:12%;
+    height:70%;
+    background:var(--paper);
+    border-radius:8px;
+    box-shadow: 0 12px 30px rgba(10,20,30,0.12);
+    z-index:5;
+    transform: translateY(110%) scaleY(1);
+    transform-origin: 50% 0%;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    align-items:stretch;
+  }
+
+  /* content area inside paper (hidden until unfolded) */
+  .paper-inner{
+    position:relative;
+    flex:1 1 auto;
+    padding:18px;
+    box-sizing:border-box;
+    opacity:0;
+    transform: translateY(6px);
+  }
+
+  /* Visible content layout (final state) */
+  .content-center-image{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    max-width:60%;
+    max-height:55%;
+    object-fit:contain;
+    border-radius:8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  }
+
+  .content-text{
+    position:absolute;
+    left:12px;
+    bottom:12px;
+    width:40%;
+    background:#fff;
+    border-radius:8px;
+    padding:10px 12px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+    font-size:14px;
+    color:#223;
+  }
+
+  .content-dog{
+    position:absolute;
+    right:46px;
+    top:12px;
+    width:72px;
+    height:72px;
+    object-fit:contain;
+    z-index:12;
+    transform-origin: center bottom;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12));
+  }
+
+  .btn-next{
+    position:absolute;
+    right:12px;
+    bottom:12px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:10px 14px;
+    border-radius:8px;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow: 0 8px 18px rgba(43,110,246,0.18);
+    transform-origin:center;
+  }
+
+  /* Small helper to show a visual hint when first tap pressed */
+  .envelope-wrap.pressed .envelope{
+    transform: scale(0.96);
+    transition: transform var(--tap-duration) var(--ease-bounce);
+  }
+
+  /* State: flap opened */
+  .envelope-wrap.flap-open .envelope-flap{
+    transform: rotateX(-110deg);
+    transition: transform var(--flap-duration) var(--ease-bounce);
+  }
+
+  /* State: paper peek halfway -> translateY to 50% visible relative to its height */
+  .envelope-wrap.paper-peek .paper{
+    transform: translateY(50%);
+    transition:
+      transform var(--peek-duration) var(--ease-fast-out),
+      box-shadow 180ms ease;
+  }
+
+  /* State: paper fully out */
+  .envelope-wrap.paper-out .paper{
+    transform: translateY(0%);
+    transition: transform var(--slide-duration) var(--ease-fast-out);
+  }
+
+  /* Unfold effect - small scaleY + rotate then settle */
+  .envelope-wrap.unfold .paper{
+    transition: transform var(--unfold-duration) var(--ease-fast-out);
+    transform-origin: 50% 0%;
+    transform: translateY(0%) rotate(-2deg) scaleY(0.98);
+  }
+
+  /* Final settled */
+  .envelope-wrap.unfolded .paper{
+    transform: translateY(0%) rotate(0deg) scaleY(1);
+  }
+
+  /* Show content with staggered transitions */
+  .envelope-wrap.content-visible .paper-inner{
+    opacity:1;
+    transform:translateY(0);
+    transition: opacity 220ms ease-out 120ms, transform 260ms var(--ease-fast-out) 120ms;
+  }
+
+  .envelope-wrap.content-visible .content-center-image{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+    transition: opacity 200ms ease-out 120ms, transform 240ms var(--ease-fast-out) 120ms;
+  }
+
+  .envelope-wrap.content-visible .content-text{
+    opacity:1;
+    transform: translateY(0);
+    transition: opacity 220ms ease-out 180ms, transform 260ms var(--ease-fast-out) 180ms;
+  }
+
+  .envelope-wrap.content-visible .content-dog{
+    opacity:1;
+    transform: translateY(0) scale(1);
+    transition: opacity 220ms ease-out 220ms, transform 260ms var(--ease-fast-out) 220ms;
+  }
+
+  .envelope-wrap.content-visible .btn-next{
+    opacity:1;
+    transform: translateY(0);
+    transition: opacity 220ms ease-out 260ms, transform 260ms var(--ease-fast-out) 260ms;
+  }
+
+  /* initial hidden states of content children */
+  .content-center-image, .content-text, .content-dog, .btn-next{
+    opacity:0;
+    will-change: transform, opacity;
+  }
+  .content-center-image{ transform: translate(-50%,-50%) scale(0.98); }
+  .content-text{ transform: translateY(8px); }
+  .content-dog{ transform: translateY(-6px) scale(0.96); }
+  .btn-next{ transform: translateY(8px); }
+
+  /* Accessibility: reduced motion */
+  @media (prefers-reduced-motion: reduce){
+    .envelope-flap,
+    .paper,
+    .envelope{
+      transition: none !important;
+      animation: none !important;
+    }
+    .envelope-wrap.flap-open .envelope-flap{ transform: rotateX(-100deg); }
+    .envelope-wrap.paper-peek .paper{ transform: translateY(50%); }
+    .envelope-wrap.paper-out .paper{ transform: translateY(0%); }
+    .envelope-wrap.content-visible .paper-inner,
+    .envelope-wrap.content-visible .content-center-image,
+    .envelope-wrap.content-visible .content-text,
+    .envelope-wrap.content-visible .content-dog,
+    .envelope-wrap.content-visible .btn-next{
+      opacity:1;
+      transform:none;
+    }
+  }
+
+  /* Small responsive tweaks */
+  @media (max-width:420px){
+    .envelope-wrap{ width:88vw; }
+    .content-text{ width:46%; font-size:13px; }
+    .content-dog{ width:56px; height:56px; right:34px; }
+  }
 </style>
 </head>
-
 <body>
+  <div class="stage">
+    <!-- Envelope / paper interaction -->
+    <div id="envelope" class="envelope-wrap" role="button" aria-label="Envelope. Tap to open message." tabindex="0">
+      <div class="envelope">
+        <div class="envelope-flap" aria-hidden="true">
+          <div class="flap-inner"></div>
+        </div>
 
-<svg viewBox="0 0 360 640" id="svg">
+        <div class="paper" aria-hidden="true">
+          <div class="paper-inner" role="document" aria-hidden="true">
+            <!-- content that will appear on final unfold -->
+            <img class="content-center-image" src="https://i.ibb.co/HTG1hn4n/IMG-20260203-100041.jpg" alt="Main image" />
+            <div class="content-text" aria-hidden="false">Hello — here's the message preview. Tap NEXT to continue.</div>
+            <img class="content-dog" src="https://i.ibb.co/8gyxPbrF/6587-removebg-preview.png" alt="Dog" />
+            <button class="btn-next" id="nextBtn" aria-label="Next">NEXT</button>
+          </div>
+        </div>
 
-  <!-- Envelope body -->
-  <rect x="30" y="300" width="300" height="180" rx="24" fill="#f9b7c7"/>
-
-  <!-- Paper (CLIPPED inside envelope) -->
-  <defs>
-    <clipPath id="clip">
-      <rect x="40" y="300" width="280" height="160" rx="18"/>
-    </clipPath>
-  </defs>
-
-  <g id="paper" clip-path="url(#clip)" transform="translate(0,120)">
-    <rect x="40" y="240" width="280" height="200" rx="18" fill="white"/>
-
-    <!-- CONTENT (hidden until step 3) -->
-    <g id="content" opacity="0">
-      <text x="180" y="270" text-anchor="middle"
-        font-family="Georgia" font-size="18">FOREVER TOGETHER</text>
-
-      <image href="https://i.ibb.co/HTG1hn4n/IMG-20260203-100041.jpg"
-        x="80" y="285" width="200" height="140" rx="12"/>
-
-      <rect x="50" y="430" width="140" height="80" rx="12" fill="#fdebed"/>
-      <text x="60" y="455" font-size="12" font-family="Georgia">
-        I am really thankful
-      </text>
-      <text x="60" y="470" font-size="12" font-family="Georgia">
-        to have you in my life.
-      </text>
-
-      <image href="https://i.ibb.co/8gyxPbrF/6587-removebg-preview.png"
-        x="210" y="420" width="90"/>
-
-      <rect x="210" y="510" width="90" height="34" rx="18" fill="#ff8fab"/>
-      <text x="255" y="533" text-anchor="middle"
-        fill="white" font-size="14">NEXT →</text>
-    </g>
-  </g>
-
-  <!-- Flap -->
-  <polygon id="flap"
-    points="30,300 180,210 330,300"
-    fill="#f48fa8"/>
-
-</svg>
-
-<div class="tap" id="tap">Tap to open</div>
+        <div class="envelope-body" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
 
 <script>
-let step = 1;
+(function(){
+  const wrap = document.getElementById('envelope');
+  const nextBtn = document.getElementById('nextBtn');
 
-document.body.addEventListener("click", () => {
-  const flap = document.getElementById("flap");
-  const paper = document.getElementById("paper");
-  const content = document.getElementById("content");
-  const tap = document.getElementById("tap");
+  // States:
+  // 0 = initial (closed)
+  // 1 = pressed feedback (first tap)
+  // 2 = flap opened + paper peek (second tap)
+  // 3 = paper fully out + unfolding + content reveal (third tap)
+  let step = 0;
+  let busy = false; // lock while animations run
 
-  if (step === 1) {
-    flap.setAttribute("transform", "rotate(180 180 300)");
-    tap.innerText = "One more tap";
+  // Timing constants should align with CSS durations
+  const TIMINGS = {
+    press: 110,
+    flap: 360,
+    peek: 360,
+    slide: 320,
+    unfold: 300,
+    contentDelay: 120
+  };
+
+  // Utility: add then remove pressed class for tactile feedback
+  function pressFeedback(){
+    wrap.classList.add('pressed');
+    setTimeout(()=> wrap.classList.remove('pressed'), TIMINGS.press);
+  }
+
+  function toStep1(){
+    // First tap: small press visual only
+    step = 1;
+    pressFeedback();
+  }
+
+  function toStep2(){
+    if (busy) return;
+    busy = true;
     step = 2;
-  }
-  else if (step === 2) {
-    paper.setAttribute("transform", "translate(0,-140)");
-    content.setAttribute("opacity", "1");
-    tap.innerText = "";
-    step = 3;
-  }
-});
-</script>
+    // flap opens and paper peeks halfway
+    wrap.classList.add('flap-open');
+    wrap.classList.add('paper-peek');
 
+    // release busy after main animations finish
+    setTimeout(()=> {
+      busy = false;
+    }, Math.max(TIMINGS.flap, TIMINGS.peek) + 30);
+  }
+
+  function toStep3(){
+    if (busy) return;
+    busy = true;
+    step = 3;
+
+    // Slide fully out, then unfold then reveal content with stagger
+    wrap.classList.remove('paper-peek');
+    wrap.classList.add('paper-out');
+
+    // after slide -> unfold
+    setTimeout(()=> {
+      wrap.classList.add('unfold');
+
+      // after unfold -> settled -> show content
+      setTimeout(()=> {
+        wrap.classList.remove('unfold');
+        wrap.classList.add('unfolded');
+
+        // reveal content
+        setTimeout(()=> {
+          wrap.classList.add('content-visible');
+          // animations done
+          busy = false;
+        }, TIMINGS.contentDelay);
+      }, TIMINGS.unfold);
+    }, TIMINGS.slide);
+  }
+
+  // Top-level tap handler advances through the three taps
+  function handleAdvance(){
+    // If user prefers reduced motion, short-circuit to final quickly
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduced){
+      // go straight to final visible
+      wrap.classList.add('flap-open','paper-out','unfolded','content-visible');
+      step = 3;
+      return;
+    }
+
+    if (step === 0) toStep1();
+    else if (step === 1) toStep2();
+    else if (step === 2) toStep3();
+    else {
+      // already final - optionally toggle back (here we do nothing)
+      // you could uncomment below to reset on next tap:
+      // reset();
+    }
+  }
+
+  // Optional reset helper (not required by spec)
+  function reset(){
+    step = 0;
+    wrap.className = 'envelope-wrap';
+  }
+
+  // Click / tap
+  wrap.addEventListener('click', (e) => {
+    e.preventDefault();
+    handleAdvance();
+  });
+
+  // Keyboard: allow Enter / Space to advance
+  wrap.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      handleAdvance();
+    }
+  });
+
+  // Prevent repeated rapid taps from breaking animation queue
+  // busy flag handles main lock; also add a short debounce for first tap
+  // Optional: stop pointer events while busy
+  const observer = new MutationObserver(() => {
+    if (busy) wrap.style.pointerEvents = 'none';
+    else wrap.style.pointerEvents = '';
+  });
+  observer.observe(wrap, { attributes:true, attributeFilter:['class'] });
+
+  // Make NEXT button keyboard accessible, no default action
+  nextBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    alert('NEXT clicked — continue to your flow.');
+  });
+
+  // ARIA live announcements for screen readers
+  function announce(message){
+    let el = document.getElementById('sr-announcer');
+    if (!el){
+      el = document.createElement('div');
+      el.id = 'sr-announcer';
+      el.setAttribute('aria-live','polite');
+      el.setAttribute('aria-atomic','true');
+      el.style.position='absolute';
+      el.style.left='-9999px';
+      el.style.width='1px';
+      el.style.height='1px';
+      el.style.overflow='hidden';
+      document.body.appendChild(el);
+    }
+    el.textContent = message;
+  }
+
+  // Announce transitions
+  wrap.addEventListener('click', () => {
+    if (step === 1) announce('Envelope pressed');
+    else if (step === 2) announce('Envelope opened — message peeked');
+    else if (step === 3) announce('Message unfolded');
+  });
+
+})();
+</script>
 </body>
 </html>
