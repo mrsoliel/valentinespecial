@@ -2,219 +2,100 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Valentine</title>
-
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 html, body {
+  margin: 0;
   height: 100%;
   overflow: hidden;
   background: #fdebed;
-  font-family: Georgia, serif;
 }
-
-/* ================= STAGE ================= */
-
-.wrapper {
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.stage {
-  width: 360px;
-  height: 520px;
-  position: relative;
-}
-
-/* ================= ENVELOPE ================= */
-
-.envelope {
-  position: absolute;
-  bottom: 80px;
-  width: 100%;
-  height: 220px;
-  background: #f9b7c7;
-  border-radius: 20px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-/* flap */
-.flap {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 120px;
-  background: #f48fa8;
-  clip-path: polygon(0 0, 50% 70%, 100% 0);
-  transform-origin: top;
-  transition: transform 0.6s ease;
-  z-index: 5;
-}
-
-/* ================= PAPER ================= */
-
-.paper {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%) translateY(140px);
-  width: 92%;
-  height: 240px;
-  background: white;
-  border-radius: 16px;
-  transition: transform 0.8s ease;
-  z-index: 1;
-  overflow: hidden;
-}
-
-/* ================= STATES ================= */
-
-.stage.step-2 .flap {
-  transform: rotateX(180deg);
-}
-
-.stage.step-2 .paper {
-  transform: translateX(-50%) translateY(80px);
-}
-
-.stage.step-3 .paper {
-  transform: translateX(-50%) translateY(-200px);
-}
-
-/* ================= CONTENT ================= */
-
-.content {
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  height: 100%;
-  padding: 12px;
-  position: relative;
-}
-
-.stage.step-3 .content {
-  opacity: 1;
-}
-
-.title {
-  text-align: center;
-  font-size: 18px;
-  margin-bottom: 8px;
-}
-
-.photo {
-  width: 240px;
-  height: 240px;
-  object-fit: cover;
-  border-radius: 14px;
+svg {
+  width: 100vw;
+  height: 100vh;
   display: block;
-  margin: 0 auto;
 }
-
-/* bottom-left text */
-.text-box {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  width: 140px;
-  background: #fdebed;
-  padding: 8px;
-  font-size: 12px;
-  border-radius: 10px;
-}
-
-/* bottom-right */
-.next-area {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  text-align: center;
-}
-
-.dog {
-  width: 80px;
-  display: block;
-  margin: 0 auto 6px;
-}
-
-.next-btn {
-  background: #ff8fab;
-  color: white;
-  padding: 10px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-}
-
-/* ================= TAP TEXT ================= */
-
 .tap {
-  position: absolute;
-  bottom: 20px;
+  position: fixed;
+  bottom: 24px;
   width: 100%;
   text-align: center;
-  font-size: 14px;
+  font-family: Georgia, serif;
   color: #b45a6a;
+  font-size: 16px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="wrapper">
-  <div class="stage" id="stage">
+<svg viewBox="0 0 360 640" id="svg">
 
-    <div class="envelope" id="envelope">
-      <div class="flap"></div>
+  <!-- Envelope body -->
+  <rect x="30" y="300" width="300" height="180" rx="24" fill="#f9b7c7"/>
 
-      <div class="paper">
-        <div class="content">
+  <!-- Paper (CLIPPED inside envelope) -->
+  <defs>
+    <clipPath id="clip">
+      <rect x="40" y="300" width="280" height="160" rx="18"/>
+    </clipPath>
+  </defs>
 
-          <div class="title">FOREVER TOGETHER</div>
+  <g id="paper" clip-path="url(#clip)" transform="translate(0,120)">
+    <rect x="40" y="240" width="280" height="200" rx="18" fill="white"/>
 
-          <img class="photo"
-            src="https://i.ibb.co/HTG1hn4n/IMG-20260203-100041.jpg">
+    <!-- CONTENT (hidden until step 3) -->
+    <g id="content" opacity="0">
+      <text x="180" y="270" text-anchor="middle"
+        font-family="Georgia" font-size="18">FOREVER TOGETHER</text>
 
-          <div class="text-box">
-            I am really thankful to have you in my life.
-          </div>
+      <image href="https://i.ibb.co/HTG1hn4n/IMG-20260203-100041.jpg"
+        x="80" y="285" width="200" height="140" rx="12"/>
 
-          <div class="next-area">
-            <img class="dog"
-              src="https://i.ibb.co/8gyxPbrF/6587-removebg-preview.png">
-            <div class="next-btn">NEXT →</div>
-          </div>
+      <rect x="50" y="430" width="140" height="80" rx="12" fill="#fdebed"/>
+      <text x="60" y="455" font-size="12" font-family="Georgia">
+        I am really thankful
+      </text>
+      <text x="60" y="470" font-size="12" font-family="Georgia">
+        to have you in my life.
+      </text>
 
-        </div>
-      </div>
-    </div>
+      <image href="https://i.ibb.co/8gyxPbrF/6587-removebg-preview.png"
+        x="210" y="420" width="90"/>
 
-    <div class="tap" id="tap">Tap to open</div>
+      <rect x="210" y="510" width="90" height="34" rx="18" fill="#ff8fab"/>
+      <text x="255" y="533" text-anchor="middle"
+        fill="white" font-size="14">NEXT →</text>
+    </g>
+  </g>
 
-  </div>
-</div>
+  <!-- Flap -->
+  <polygon id="flap"
+    points="30,300 180,210 330,300"
+    fill="#f48fa8"/>
+
+</svg>
+
+<div class="tap" id="tap">Tap to open</div>
 
 <script>
 let step = 1;
-const stage = document.getElementById("stage");
-const tap = document.getElementById("tap");
-const envelope = document.getElementById("envelope");
 
-envelope.addEventListener("click", () => {
+document.body.addEventListener("click", () => {
+  const flap = document.getElementById("flap");
+  const paper = document.getElementById("paper");
+  const content = document.getElementById("content");
+  const tap = document.getElementById("tap");
+
   if (step === 1) {
-    stage.classList.add("step-2");
+    flap.setAttribute("transform", "rotate(180 180 300)");
     tap.innerText = "One more tap";
     step = 2;
-  } 
+  }
   else if (step === 2) {
-    stage.classList.add("step-3");
+    paper.setAttribute("transform", "translate(0,-140)");
+    content.setAttribute("opacity", "1");
     tap.innerText = "";
     step = 3;
   }
